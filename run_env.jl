@@ -3,7 +3,7 @@ using PyPlot, Random, CSV;
 
 wpath = "/Users/yoelsanchezaraujo/Desktop/pniFallRotation";
 include(joinpath(wpath, "aux/env.jl"));
-include(joinpath(wpath, "models/particle_filter_iw.jl"));
+include(joinpath(wpath, "models/particle_filter_rs.jl"));
 cd(wpath);
 
 # using gershman data
@@ -19,7 +19,7 @@ X = Array(dfx);
 # data_params = make_data(nfeat, acq_rho, ext_rho, acqn, extn);
 # data = data_params[:data];
 # particle filter parameters
-n_particles = 3000;
+n_particles = 300;
 crpAlpha = 0.1;
 
 # trial 71 is when the test phase begins

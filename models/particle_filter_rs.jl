@@ -16,7 +16,6 @@ function particle_filter(X::Array, n_particles::Int64, alpha::Float64; max_cause
     value = zeros(T)
     value[1] = rand()
     propDist = zeros(T, max_cause)
-    impW = ones(T, n_particles)
     z = zeros(Int64, T, n_particles)
     z[1, :] .= 1
     cause_count[1, :] .+= 1
@@ -31,8 +30,12 @@ function particle_filter(X::Array, n_particles::Int64, alpha::Float64; max_cause
     # all is fine up until here
     K = 1
     for t in 2:T
+        causeSampDist = cause_prior[t-1, 1:K, :]
+        causeSampDist = causeSampDist ./ sum(causeSampDist, dims=1)
         # forward sample causes for each particle
-        z[t, :] = rand(Categorical(propDist[t-1, :]), n_particles)
+        for pidx in 1:n_particles
+            z[t, pidx] = rand(Categorical(causeSampDist[:, pidx]))
+        end
         maxZ = maximum(z[t, :])
         maxZ == K ? K = K + 1 : (maxZ > K ? K = maxZ : nothing)
         x0_bit, x1_bit = X[t, :] .== 0, X[t, :] .== 1
@@ -56,21 +59,13 @@ function particle_filter(X::Array, n_particles::Int64, alpha::Float64; max_cause
         impw = zeros(n_particles)
         for pidx in 1:n_particles
             z_particle = z[t, pidx]
-            impw[pidx] = post[z_particle, pidx] * impW[t-1, pidx]
+            impw[pidx] = likprod[z_particle, pidx]
         end
-        impw = impw ./ sum(impw)
-        if 1 ./ sum(impw.^2) < n_particles /2
-            println("resampling:    ", t)
-            rspidx = resample_systematic(impw, n_particles)
-            impw = [1/n_particles for p in 1:n_particles]
-        else
-            rspidx = collect(1:n_particles)
-        end
-        impW[t, :] = impw
+        rspidx = resample_systematic(impw ./ sum(impw), n_particles)
         # update counts and reassign particles(if needed)
         zIndex = z[t, rspidx]
         z[t, :] = zIndex
-        propDist[t, 1:K] = post[:, rspidx] * impw
+        propDist[t, 1:K] = mean(post[:, rspidx], dims=2)
         cause_count[:, :] = cause_count[:, rspidx]
         fcountsA[:, :, :] = fcountsA[:, :, rspidx]
         fcountsB[:, :, :] = fcountsB[:, :, rspidx]
@@ -87,7 +82,6 @@ function particle_filter(X::Array, n_particles::Int64, alpha::Float64; max_cause
         lik = liks[:, 1:ncu, :, :],
         cprior = cause_prior[:, 1:ncu, :],
         ccount = cause_count[1:ncu, :],
-        impw = impW[:, 1:ncu],
         v = value,
         pus = pUS[:, 1:ncu, :],
         poscs = posCS[:, 1:ncu, :],
