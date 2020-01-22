@@ -2,12 +2,12 @@ using Distributions, LinearAlgebra, DataFrames;
 using PyPlot, Random, CSV;
 
 wpath = "/Users/yoelsanchezaraujo/Desktop/pniFallRotation";
-include(joinpath(wpath, "env.jl"));
-include(joinpath(wpath, "particle_filter_iw.jl"));
+include(joinpath(wpath, "aux/env.jl"));
+include(joinpath(wpath, "models/particle_filter_iw.jl"));
 cd(wpath);
 
 # using gershman data
-df = CSV.read("example_datABA.csv");
+df = CSV.read("data/example_datABA.csv");
 dfx = df[!, [7, 3, 4, 5, 6]];
 X = Array(dfx);
 # creating data
