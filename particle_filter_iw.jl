@@ -16,7 +16,7 @@ function particle_filter(X::Array, n_particles::Int64, alpha::Float64; max_cause
     value = zeros(T)
     value[1] = rand()
     propDist = zeros(T, max_cause)
-    impW = zeros(T, n_particles)
+    impW = ones(T, n_particles)
     z = zeros(Int64, T, n_particles)
     z[1, :] .= 1
     cause_count[1, :] .+= 1
@@ -62,7 +62,7 @@ function particle_filter(X::Array, n_particles::Int64, alpha::Float64; max_cause
             z_particle = z[t, pidx]
             impw[pidx] = post[z_particle, pidx]
         end
-        impw = impw ./ sum(impw)
+        impw = (impw .* impW[t-1, :]) ./ sum(impw .* impW[t-1, :])
         if 1 ./ sum(impw.^2) < n_particles /2
             println("resampling:    ", t)
             rspidx = resample_systematic(impw, n_particles)
