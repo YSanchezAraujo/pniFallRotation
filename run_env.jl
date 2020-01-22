@@ -1,7 +1,7 @@
 using Distributions, LinearAlgebra, DataFrames;
 using PyPlot, Random, CSV;
 
-wpath = "/Users/yoelsanchezaraujo/Desktop/pniSpringRotation";
+wpath = "/Users/yoelsanchezaraujo/Desktop/pniFallRotation";
 include(joinpath(wpath, "env.jl"));
 include(joinpath(wpath, "particle_filter_iw.jl"));
 cd(wpath);
