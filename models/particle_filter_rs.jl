@@ -30,21 +30,19 @@ function particle_filter(X::Array, n_particles::Int64, alpha::Float64; max_cause
     # all is fine up until here
     K = 1
     for t in 2:T
-        causeSampDist = cause_prior[t-1, 1:K, :]
-        causeSampDist = causeSampDist ./ sum(causeSampDist, dims=1)
+        # update CRP prior
+        priorProbs = update_cause_probs(cause_count, t, alpha) # (max_cause, n_particles)
+        priorProbs = priorProbs ./ sum(priorProbs, dims=1)
+        cause_prior[t, :, :] = priorProbs
         # forward sample causes for each particle
         for pidx in 1:n_particles
-            z[t, pidx] = rand(Categorical(causeSampDist[:, pidx]))
+            z[t, pidx] = rand(Categorical(priorProbs[:, pidx]))
         end
         maxZ = maximum(z[t, :])
         maxZ == K ? K = K + 1 : (maxZ > K ? K = maxZ : nothing)
         x0_bit, x1_bit = X[t, :] .== 0, X[t, :] .== 1
         # get feature indices to update counts
         x0, x1 = findall(x0_bit), findall(x1_bit)
-        # update CRP prior
-        priorProbs = update_cause_probs(cause_count, t, alpha) # (max_cause, n_particles)
-        priorProbs = priorProbs ./ sum(priorProbs, dims=1)
-        cause_prior[t, :, :] = priorProbs
         # compute likelihood for these samples
         priorProbs = priorProbs[1:K, :] # (K, n_particles)
         fca, fcb = copy(fcountsA[1:K, :, :]), copy(fcountsB[1:K, :, :])

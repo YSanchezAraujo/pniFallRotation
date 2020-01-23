@@ -31,27 +31,22 @@ function particle_filter(X::Array, n_particles::Int64, alpha::Float64; max_cause
     # all is fine up until here
     K = 1
     for t in 2:T
-        # forward sample causes for each particle
-        z[t, :] = rand(Categorical(propDist[t-1, :]), n_particles)
-        maxZ = maximum(z[t, :])
-        maxZ == K ? K = K + 1 : (maxZ > K ? K = maxZ : nothing)
         x0_bit, x1_bit = X[t, :] .== 0, X[t, :] .== 1
-        # get feature indices to update counts
-        x0, x1 = findall(x0_bit), findall(x1_bit)
-        # update CRP prior
         priorProbs = update_cause_probs(cause_count, t, alpha) # (max_cause, n_particles)
         priorProbs = priorProbs ./ sum(priorProbs, dims=1)
         cause_prior[t, :, :] = priorProbs
-        # compute likelihood for these samples
-        priorProbs = priorProbs[1:K, :] # (K, n_particles)
-        fca, fcb = copy(fcountsA[1:K, :, :]), copy(fcountsB[1:K, :, :])
+        fca, fcb = copy(fcountsA[:, :, :]), copy(fcountsB[:, :, :])
         fca[:, x0_bit, :] .= fcb[:, x0_bit, :]
-        lik = fca ./ (fcountsA[1:K, :, :] .+ fcb) # (K, F, n_particles)
-        liks[t, 1:K, :, :] = lik
+        lik = fca ./ (fcountsA[:, :, :] .+ fcb) # (K, F, n_particles)
+        liks[t, :, :, :] = lik
         likprod = hcat([col_prod(lik[:, :, p]) for p in 1:n_particles]...) # (K, n_particles)
         postNumer = likprod .* priorProbs # (K, n_particles)
-        post = postNumer ./ sum(postNumer, dims=1) # (K, n_particles)
-        cause_post[t, 1:K, :] = post
+        post = postNumer ./ sum(postNumer, dims=1) 
+        # forward sample causes for each particle
+        z[t, :] = rand(Categorical(vcat(mean(post, dims=2)...)), n_particles)
+        # get feature indices to update counts
+        x0, x1 = findall(x0_bit), findall(x1_bit)
+        cause_post[t, :, :] = post
         # resample the particles according to the importance weights
         impw = zeros(n_particles)
         for pidx in 1:n_particles
@@ -70,7 +65,7 @@ function particle_filter(X::Array, n_particles::Int64, alpha::Float64; max_cause
         # update counts and reassign particles(if needed)
         zIndex = z[t, rspidx]
         z[t, :] = zIndex
-        propDist[t, 1:K] = post[:, rspidx] * impw
+        propDist[t, :] = post[:, rspidx] * impw
         cause_count[:, :] = cause_count[:, rspidx]
         fcountsA[:, :, :] = fcountsA[:, :, rspidx]
         fcountsB[:, :, :] = fcountsB[:, :, rspidx]

@@ -3,7 +3,7 @@ using PyPlot, Random, CSV;
 
 wpath = "/Users/yoelsanchezaraujo/Desktop/pniFallRotation";
 include(joinpath(wpath, "aux/env.jl"));
-include(joinpath(wpath, "models/particle_filter_rs.jl"));
+include(joinpath(wpath, "models/particle_filter_iw.jl"));
 cd(wpath);
 
 # using gershman data
