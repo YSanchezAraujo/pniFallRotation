@@ -38,21 +38,19 @@ function particle_filter(X::Array, n_particles::Int64, alpha::Float64; max_cause
         for pidx in 1:n_particles
             z[t, pidx] = rand(Categorical(priorProbs[:, pidx]))
         end
-        maxZ = maximum(z[t, :])
-        maxZ == K ? K = K + 1 : (maxZ > K ? K = maxZ : nothing)
         x0_bit, x1_bit = X[t, :] .== 0, X[t, :] .== 1
         # get feature indices to update counts
         x0, x1 = findall(x0_bit), findall(x1_bit)
         # compute likelihood for these samples
-        priorProbs = priorProbs[1:K, :] # (K, n_particles)
-        fca, fcb = copy(fcountsA[1:K, :, :]), copy(fcountsB[1:K, :, :])
+        priorProbs = priorProbs[:, :] # (K, n_particles)
+        fca, fcb = copy(fcountsA[:, :, :]), copy(fcountsB[:, :, :])
         fca[:, x0_bit, :] .= fcb[:, x0_bit, :]
-        lik = fca ./ (fcountsA[1:K, :, :] .+ fcb) # (K, F, n_particles)
-        liks[t, 1:K, :, :] = lik
+        lik = fca ./ (fcountsA[:, :, :] .+ fcb) # (K, F, n_particles)
+        liks[t, :, :, :] = lik
         likprod = hcat([col_prod(lik[:, :, p]) for p in 1:n_particles]...) # (K, n_particles)
         postNumer = likprod .* priorProbs # (K, n_particles)
         post = postNumer ./ sum(postNumer, dims=1) # (K, n_particles)
-        cause_post[t, 1:K, :] = post
+        cause_post[t, :, :] = post
         # resample the particles according to the importance weights
         impw = zeros(n_particles)
         for pidx in 1:n_particles
@@ -63,7 +61,7 @@ function particle_filter(X::Array, n_particles::Int64, alpha::Float64; max_cause
         # update counts and reassign particles(if needed)
         zIndex = z[t, rspidx]
         z[t, :] = zIndex
-        propDist[t, 1:K] = mean(post[:, rspidx], dims=2)
+        propDist[t, :] = mean(post[:, rspidx], dims=2)
         cause_count[:, :] = cause_count[:, rspidx]
         fcountsA[:, :, :] = fcountsA[:, :, rspidx]
         fcountsB[:, :, :] = fcountsB[:, :, rspidx]
