@@ -41,7 +41,6 @@ function particle_filter(X::Array, n_particles::Int64, alpha::Float64; max_cause
         # get feature indices to update counts
         x0, x1 = findall(x0_bit), findall(x1_bit)
         # compute likelihood for these samples
-        priorProbs = priorProbs # (K, n_particles)
         comps = get_comps(x0_bit, fcountsA, fcountsB, priorProbs, cause_count)
         liks[t, :, :, :] = comps.lik
         cause_post[t, :, :] = comps.post

@@ -1,9 +1,10 @@
 using Distributions, LinearAlgebra, DataFrames;
 using PyPlot, Random, CSV;
 
-wpath = "/Users/yoelsanchezaraujo/Desktop/pniFallRotation";
+#wpath = "/Users/yoelsanchezaraujo/Desktop/pniFallRotation";
+wpath = "/home/yoel/Desktop/pniFallRotation";
 include(joinpath(wpath, "aux/env.jl"));
-include(joinpath(wpath, "models/particle_filter_rs.jl"));
+include(joinpath(wpath, "models/particle_filter_iw.jl"));
 cd(wpath);
 
 # using gershman data
@@ -23,7 +24,7 @@ n_particles = 300;
 crpAlpha = 0.1;
 
 # trial 71 is when the test phase begins
-res = particle_filter(X, n_particles, crpAlpha; max_cause=100);
+res = particle_filter(X, n_particles, crpAlpha; max_cause=20);
 used_cause_count = size(res.ccount, 1)
 postdf = DataFrame(res.post);
 likdf = DataFrame(reshape(mean(prod(res.lik, dims=3), dims=4), (90, used_cause_count)));

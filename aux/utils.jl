@@ -131,11 +131,10 @@ function get_comps(x0::BitArray{1}, fa::Array{Float64, 3}, fb::Array{Float64, 3}
     postCS = hcat([col_prod(lik[:, 2:F, p]) for p in 1:P]...)
     pNumer = likprod .* prior
     post = pNumer ./ sum(pNumer, dims=1)
-    probUS = fCount[:, 1, :] ./  (ccount .+ eps())
+    probUS = fa[:, 1, :] ./  (ccount .+ 2)
     postCS = postCS ./ sum(postCS, dims=1)
-    v = sum(vcat(probUS...) .* vcat(postCS...)) / P
+    v = sum(col_prod([vcat(probUS...) vcat(postCS...)]) )/ P
     return (lik=lik, likprod=likprod, post=post, 
             pUS=probUS, postCS=postCS, v=v)
-
 end
 
