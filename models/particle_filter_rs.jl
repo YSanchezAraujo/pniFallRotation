@@ -1,7 +1,7 @@
 include("../aux/utils.jl");
 import Turing.Inference.resample_systematic;
 
-function particle_filter(X::Array, n_particles::Int64, alpha::Float64; max_cause::Int64=10)::NamedTuple
+function particle_filterRS(X::Array, n_particles::Int64, alpha::Float64; max_cause::Int64=10)::NamedTuple
     T, F = size(X)
     fcountsA = ones(max_cause, F, n_particles)
     fcountsB = ones(max_cause, F, n_particles)

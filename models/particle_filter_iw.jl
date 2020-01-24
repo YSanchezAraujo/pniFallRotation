@@ -1,7 +1,7 @@
 include("../aux/utils.jl");
 import Turing.Inference.resample_systematic;
 
-function particle_filter(X::Array, n_particles::Int64, alpha::Float64; max_cause::Int64=10)::NamedTuple
+function particle_filterIW(X::Array, n_particles::Int64, alpha::Float64; max_cause::Int64=10)::NamedTuple
     T, F = size(X)
     fcountsA = ones(max_cause, F, n_particles)
     fcountsB = ones(max_cause, F, n_particles)
@@ -34,12 +34,6 @@ function particle_filter(X::Array, n_particles::Int64, alpha::Float64; max_cause
         priorProbs = update_cause_probs(cause_count, t, alpha) # (max_cause, n_particles)
         priorProbs = priorProbs ./ sum(priorProbs, dims=1)
         cause_prior[t, :, :] = priorProbs
-        # fca = copy(fcountsA[:, :, :])
-        # fca[:, x0_bit, :] .= fcountsB[:, x0_bit, :]
-        # liks[t, :, :, :] = fca ./ (fcountsA .+ fcountsB)
-        # likprod = hcat([col_prod(liks[t, :, :, p]) for p in 1:n_particles]...) # (K, n_particles)
-        # postNumer = likprod .* priorProbs # (K, n_particles)
-        # post = postNumer ./ sum(postNumer, dims=1) 
         comps = get_comps(x0_bit, fcountsA, fcountsB, priorProbs, cause_count)
         liks[t, :, :, :] = comps.lik
         cause_post[t, :, :] = comps.post
