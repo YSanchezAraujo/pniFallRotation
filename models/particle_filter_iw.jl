@@ -29,17 +29,15 @@ function particle_filter(X::Array, n_particles::Int64, alpha::Float64; max_cause
     fcountsA[1, :, :] .+= X[1, :]
     fcountsB[1, :, :] .+= (1 .- X[1, :])
     # all is fine up until here
-    K = 1
     for t in 2:T
         x0_bit, x1_bit = X[t, :] .== 0, X[t, :] .== 1
         priorProbs = update_cause_probs(cause_count, t, alpha) # (max_cause, n_particles)
         priorProbs = priorProbs ./ sum(priorProbs, dims=1)
         cause_prior[t, :, :] = priorProbs
-        fca, fcb = copy(fcountsA[:, :, :]), copy(fcountsB[:, :, :])
-        fca[:, x0_bit, :] .= fcb[:, x0_bit, :]
-        lik = fca ./ (fcountsA[:, :, :] .+ fcb) # (K, F, n_particles)
-        liks[t, :, :, :] = lik
-        likprod = hcat([col_prod(lik[:, :, p]) for p in 1:n_particles]...) # (K, n_particles)
+        fca = copy(fcountsA[:, :, :])
+        fca[:, x0_bit, :] .= fcountsB[:, x0_bit, :]
+        liks[t, :, :, :] = fca ./ (fcountsA .+ fcountsB)
+        likprod = hcat([col_prod(liks[t, :, :, p]) for p in 1:n_particles]...) # (K, n_particles)
         postNumer = likprod .* priorProbs # (K, n_particles)
         post = postNumer ./ sum(postNumer, dims=1) 
         # forward sample causes for each particle

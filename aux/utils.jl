@@ -120,3 +120,22 @@ function expsumlog(x::Array{Float64, 1})::Float64
     end
     return exp(sl)
 end
+
+function get_comps(x0::BitArray{1}, fa::Array{Float64, 3}, fb::Array{Float64, 3}, 
+                   prior::Array{Float64, 2}, ccount::Array{Int64, 2})::NamedTuple
+    C, F, P = size(fa)
+    fCount = copy(fa)
+    fCount[:, x0, :] .= fb[:, x0, :]
+    lik = fCount ./ (fa .+ fb)
+    likprod = hcat([col_prod(lik[:, :, p]) for p in 1:P]...)
+    postCS = hcat([col_prod(lik[:, 2:F, p]) for p in 1:P]...)
+    pNumer = likprod .* prior
+    post = pNumer ./ sum(pNumer, dims=1)
+    probUS = fCount[:, 1, :] ./  (ccount .+ eps())
+    postCS = postCS ./ sum(postCS, dims=1)
+    v = sum(vcat(probUS...) .* vcat(postCS...)) / P
+    return (lik=lik, likprod=likprod, post=post, 
+            pUS=probUS, postCS=postCS, v=v)
+
+end
+

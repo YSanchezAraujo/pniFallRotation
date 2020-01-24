@@ -28,7 +28,6 @@ function particle_filter(X::Array, n_particles::Int64, alpha::Float64; max_cause
     fcountsA[1, :, :] .+= X[1, :]
     fcountsB[1, :, :] .+= (1 .- X[1, :])
     # all is fine up until here
-    K = 1
     for t in 2:T
         # update CRP prior
         priorProbs = update_cause_probs(cause_count, t, alpha) # (max_cause, n_particles)
@@ -42,26 +41,24 @@ function particle_filter(X::Array, n_particles::Int64, alpha::Float64; max_cause
         # get feature indices to update counts
         x0, x1 = findall(x0_bit), findall(x1_bit)
         # compute likelihood for these samples
-        priorProbs = priorProbs[:, :] # (K, n_particles)
-        fca, fcb = copy(fcountsA[:, :, :]), copy(fcountsB[:, :, :])
-        fca[:, x0_bit, :] .= fcb[:, x0_bit, :]
-        lik = fca ./ (fcountsA[:, :, :] .+ fcb) # (K, F, n_particles)
-        liks[t, :, :, :] = lik
-        likprod = hcat([col_prod(lik[:, :, p]) for p in 1:n_particles]...) # (K, n_particles)
-        postNumer = likprod .* priorProbs # (K, n_particles)
-        post = postNumer ./ sum(postNumer, dims=1) # (K, n_particles)
-        cause_post[t, :, :] = post
+        priorProbs = priorProbs # (K, n_particles)
+        comps = get_comps(x0_bit, fcountsA, fcountsB, priorProbs, cause_count)
+        liks[t, :, :, :] = comps.lik
+        cause_post[t, :, :] = comps.post
+        value[t] = comps.v
+        pUS[t, :, :] = comps.pUS
+        posCS[t, :, :] = comps.postCS
         # resample the particles according to the importance weights
         impw = zeros(n_particles)
         for pidx in 1:n_particles
             z_particle = z[t, pidx]
-            impw[pidx] = likprod[z_particle, pidx]
+            impw[pidx] = comps.likprod[z_particle, pidx]
         end
         rspidx = resample_systematic(impw ./ sum(impw), n_particles)
         # update counts and reassign particles(if needed)
         zIndex = z[t, rspidx]
         z[t, :] = zIndex
-        propDist[t, :] = mean(post[:, rspidx], dims=2)
+        propDist[t, :] = mean(comps.post[:, rspidx], dims=2)
         cause_count[:, :] = cause_count[:, rspidx]
         fcountsA[:, :, :] = fcountsA[:, :, rspidx]
         fcountsB[:, :, :] = fcountsB[:, :, rspidx]
