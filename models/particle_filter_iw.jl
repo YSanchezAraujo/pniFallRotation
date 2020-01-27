@@ -10,11 +10,10 @@ function particle_filterIW(X::Array, n_particles::Int64, alpha::Float64; max_cau
     cause_prior = zeros(T, max_cause, n_particles)
     cause_count = zeros(Int64, max_cause, n_particles)
     pUS = zeros(T, max_cause, n_particles)
-    pUS[1, :, :] .= rand()
+    pUS[1, :, :] .= rand() # wrong -- being lazy here
     posCS = zeros(T, max_cause, n_particles)
-    posCS[1, :, :] .= rand()
-    value = zeros(T)
-    value[1] = rand()
+    posCS[1, :, :] .= rand() # wrong -- being lazy here
+    value = ones(T) .* 0.5
     propDist = zeros(T, max_cause)
     impW = ones(T, n_particles)
     z = zeros(Int64, T, n_particles)

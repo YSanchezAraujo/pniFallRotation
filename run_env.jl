@@ -1,8 +1,8 @@
 using Distributions, LinearAlgebra, DataFrames;
 using PyPlot, Random, CSV;
 
-#wpath = "/Users/yoelsanchezaraujo/Desktop/pniFallRotation";
-wpath = "/home/yoel/Desktop/pniFallRotation";
+wpath = "/Users/yoelsanchezaraujo/Desktop/pniFallRotation";
+#wpath = "/home/yoel/Desktop/pniFallRotation";
 include(joinpath(wpath, "aux/env.jl"));
 include(joinpath(wpath, "models/particle_filter_iw.jl"));
 include(joinpath(wpath, "models/particle_filter_rs.jl"));
@@ -26,33 +26,14 @@ n_particles = 3000;
 Random.seed!(32343)
 # now trying with a larger concentration parameter
 
-plot_results(
-	[particle_filterRS(X, n_particles, 0.1; max_cause=50), 
-	 particle_filterIW(X, n_particles, 0.1; max_cause=50)]
-    , "alpha0.1"
-)
+rs = particle_filterRS(X, n_particles, 0.1; max_cause=50);
+iw = particle_filterIW(X, n_particles, 0.1; max_cause=50);
 
-plot_results(
-	[particle_filterRS(X, n_particles, 0.5; max_cause=50), 
-	 particle_filterIW(X, n_particles, 0.5; max_cause=50)]
-    , "alpha0.5"
-)
+for alpha in [0.1, 0.5, 1.0, 3.0, 6.0]
+	plot_results(
+        [particle_filterRS(X, n_particles, alpha; max_cause=50),
+         particle_filterIW(X, n_particles, alpha; max_cause=50)],
+         string("alpha", alpha)
+	)
+end
 
-plot_results(
-	[particle_filterRS(X, n_particles, 1.0; max_cause=50), 
-	 particle_filterIW(X, n_particles, 1.0; max_cause=50)]
-    , "alpha1.0"
-)
-
-plot_results(
-	[particle_filterRS(X, n_particles, 3.0; max_cause=50), 
-	 particle_filterIW(X, n_particles, 3.0; max_cause=50)]
-    , "alpha3.0"
-)
-
-
-plot_results(
-	[particle_filterRS(X, n_particles, 6.0; max_cause=50), 
-	 particle_filterIW(X, n_particles, 6.0; max_cause=50)]
-    , "alpha6.0"
-)

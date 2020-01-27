@@ -27,8 +27,7 @@ function expand_array(arr::Array; t::Int64=1, dim::Int64=1)::Array
 end
 
 function update_cause_probs(cause_vec::Array, t::Int64, alpha::Float64)::Array
-    N = length(cause_vec)
-    probs = zeros(N)
+    probs = zeros(length(cause_vec))
     nnonzero = Int64(sum(cause_vec .!= 0))
     for (idx, val) in enumerate(cause_vec)
         if (val == 0 && idx == nnonzero + 1)
@@ -157,7 +156,7 @@ function plot_results(r, save_prefix)
     end
     plt.savefig(string(save_prefix, "posteiorsCause.png"), dpi=300, bbox_inches="tight")
     plt.close()
-
+    # same as above but bar plots
     fig, ax = plt.subplots(ncols=2, nrows=2, figsize=(13, 8));
     ax[1,1].bar(
         height=r[1].post[21, :],
@@ -181,7 +180,6 @@ function plot_results(r, save_prefix)
     )
     plt.savefig(string(save_prefix, "barplotsCausePost.png"), dpi=300, bbox_inches="tight")
     plt.close()
-
     # plotting probability of US
     fig, ax = plt.subplots(ncols=2, nrows=1, figsize=(8, 5));
     ax[1].plot(reshape(mean(r[1].pus,dims=3),(90, size(r[1].post, 2))))
@@ -192,7 +190,6 @@ function plot_results(r, save_prefix)
     ax[2].set_title("importance weighted model")
     plt.savefig(string(save_prefix, "probabilityUS.png"), bbox_inches="tight", dpi=300)
     plt.close()
-
     # plotting value
     fig, ax = plt.subplots(ncols=1, nrows=2, figsize=(12, 6));
     ax[1].plot(r[1].v)
@@ -203,8 +200,6 @@ function plot_results(r, save_prefix)
     fig.text(0.04, 0.5, "value", va="center", rotation="vertical")
     plt.savefig(string(save_prefix, "value.png"), bbox_inches="tight", dpi=300)
     plt.close()
-
-
     # posterior of CS
     fig, ax = plt.subplots(ncols=1, nrows=2, figsize=(15, 8));
     ax[1].plot(reshape(mean(r[1].poscs, dims=3), (90, size(r[1].post, 2))))
