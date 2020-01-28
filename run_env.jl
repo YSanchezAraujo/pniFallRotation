@@ -26,14 +26,17 @@ n_particles = 3000;
 Random.seed!(32343)
 # now trying with a larger concentration parameter
 
-rs = particle_filterRS(X, n_particles, 0.1; max_cause=50);
-iw = particle_filterIW(X, n_particles, 0.1; max_cause=50);
+multi_plot = true
 
-for alpha in [0.1, 0.5, 1.0, 3.0, 6.0]
-	plot_results(
-        [particle_filterRS(X, n_particles, alpha; max_cause=50),
-         particle_filterIW(X, n_particles, alpha; max_cause=50)],
-         string("alpha", alpha)
-	)
+if !multi_plot
+    rs = particle_filterRS(X, n_particles, 0.1; max_cause=50);
+    iw = particle_filterIW(X, n_particles, 0.1; max_cause=50);
+else
+	for alpha in [0.1, 0.5, 1.0, 3.0, 6.0]
+		plot_results(
+	        [particle_filterRS(X, n_particles, alpha; max_cause=50),
+	         particle_filterIW(X, n_particles, alpha; max_cause=50)],
+	         string("alpha", alpha)
+		)
+	end
 end
-
