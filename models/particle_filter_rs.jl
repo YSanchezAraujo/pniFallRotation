@@ -10,19 +10,18 @@ function particle_filterRS(X::Array, n_particles::Int64, alpha::Float64; max_cau
     cause_prior = zeros(T, max_cause, n_particles)
     cause_count = zeros(Int64, max_cause, n_particles)
     pUS = zeros(T, max_cause, n_particles)
-    pUS[1, :, :] .= rand() # wrong -- being lazy here
     posCS = zeros(T, max_cause, n_particles)
-    posCS[1, :, :] .= rand() # wrong -- being lazy here
-    value = ones(T) .* 0.5
     propDist = zeros(T, max_cause)
     z = zeros(Int64, T, n_particles)
     z[1, :] .= 1
     cause_count[1, :] .+= 1
     cause_prior[1, 1, :] .= 1.0
-    liks[1, 1, :, :] = fcountsA[1, :, :] ./ (fcountsA[1, :, :] .+ fcountsB[1, :, :])
-    likTime = hcat([col_prod(liks[1, :, :, p]) for p in 1:n_particles]...)
-    impdistNumer = likTime .* cause_prior[1, :, :]
-    cause_post[1, :, :] = impdistNumer ./ (sum(impdistNumer, dims=1) .+ eps())
+    comps = get_comps(X[1, :] .== 0, fcountsA, fcountsB, cause_prior[1, :, :], cause_count)
+    liks[1, :, :, :] = comps.lik
+    cause_post[1, :, :] = comps.post
+    value[1] = comps.v
+    pUS[1, :, :] = comps.pUS
+    posCS[1, :, :] = comps.postCS
     propDist[1, :] = vcat(mean(cause_post[1, :, :], dims=2)...)
     fcountsA[1, :, :] .+= X[1, :]
     fcountsB[1, :, :] .+= (1 .- X[1, :])

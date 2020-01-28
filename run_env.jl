@@ -1,8 +1,8 @@
 using Distributions, LinearAlgebra, DataFrames;
 using PyPlot, Random, CSV;
 
-wpath = "/Users/yoelsanchezaraujo/Desktop/pniFallRotation";
-#wpath = "/home/yoel/Desktop/pniFallRotation";
+#wpath = "/Users/yoelsanchezaraujo/Desktop/pniFallRotation";
+wpath = "/home/yoel/Desktop/pniFallRotation";
 include(joinpath(wpath, "aux/env.jl"));
 include(joinpath(wpath, "models/particle_filter_iw.jl"));
 include(joinpath(wpath, "models/particle_filter_rs.jl"));
