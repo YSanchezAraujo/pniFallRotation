@@ -15,9 +15,9 @@ function particle_filterRS(X::Array, n_particles::Int64, alpha::Float64; max_cau
     propDist = zeros(T, max_cause)
     z = zeros(Int64, T, n_particles)
     z[1, :] .= 1
+    comps = get_comps(X[1, :] .== 0, fcountsA, fcountsB, cause_prior[1, :, :], cause_count)
     cause_count[1, :] .+= 1
     cause_prior[1, 1, :] .= 1.0
-    comps = get_comps(X[1, :] .== 0, fcountsA, fcountsB, cause_prior[1, :, :], cause_count)
     liks[1, :, :, :] = comps.lik
     cause_post[1, :, :] = comps.post
     value[1] = comps.v
@@ -26,7 +26,6 @@ function particle_filterRS(X::Array, n_particles::Int64, alpha::Float64; max_cau
     propDist[1, :] = vcat(mean(cause_post[1, :, :], dims=2)...)
     fcountsA[1, :, :] .+= X[1, :]
     fcountsB[1, :, :] .+= (1 .- X[1, :])
-    # all is fine up until here
     for t in 2:T
         # update CRP prior
         priorProbs = update_cause_probs(cause_count, t, alpha) # (max_cause, n_particles)

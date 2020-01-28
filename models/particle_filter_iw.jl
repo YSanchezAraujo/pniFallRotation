@@ -28,7 +28,6 @@ function particle_filterIW(X::Array, n_particles::Int64, alpha::Float64; max_cau
     fcountsA[1, :, :] .+= X[1, :]
     fcountsB[1, :, :] .+= (1 .- X[1, :])
     impW[1, :] .= 1/n_particles
-    # all is fine up until here
     for t in 2:T
         x0_bit, x1_bit = X[t, :] .== 0, X[t, :] .== 1
         priorProbs = update_cause_probs(cause_count, t, alpha) # (max_cause, n_particles)
@@ -51,7 +50,7 @@ function particle_filterIW(X::Array, n_particles::Int64, alpha::Float64; max_cau
             impw[pidx] = comps.post[z_particle, pidx] * impW[t-1, pidx]
         end
         impw = impw ./ sum(impw)
-        if 1 ./ sum(impw.^2) < n_particles /2
+        if 1 ./ sum(impw.^2) < n_particles / 2
             println("resampling:    ", t)
             rspidx = resample_systematic(impw, n_particles)
             impw = [1/n_particles for p in 1:n_particles]

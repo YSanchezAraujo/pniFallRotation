@@ -130,8 +130,8 @@ function get_comps(x0::BitArray{1}, fa::Array{Float64, 3}, fb::Array{Float64, 3}
     postCS = hcat([col_prod(lik[:, 2:F, p]) for p in 1:P]...)
     pNumer = likprod .* prior
     post = pNumer ./ sum(pNumer, dims=1)
-    probUS = fa[:, 1, :] ./  (ccount .+ 2)
-    postCS = postCS ./ sum(postCS, dims=1)
+    probUS = fa[:, 1, :] ./ (ccount .+ 2)
+    postCS = (postCS .* prior) ./ sum((postCS .* prior), dims=1)
     v = sum(vcat(probUS...) .* vcat(postCS...) ) / P
     return (
         lik=lik, 
@@ -242,5 +242,4 @@ function plot_results(r, save_prefix)
     end
     plt.savefig(string(save_prefix, "posteiorCS.png"), dpi=300, bbox_inches="tight")
     plt.close()
-
 end
