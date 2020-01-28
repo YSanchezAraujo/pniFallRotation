@@ -11,6 +11,7 @@ function particle_filterRS(X::Array, n_particles::Int64, alpha::Float64; max_cau
     cause_count = zeros(Int64, max_cause, n_particles)
     pUS = zeros(T, max_cause, n_particles)
     posCS = zeros(T, max_cause, n_particles)
+    value = zeros(T)
     propDist = zeros(T, max_cause)
     z = zeros(Int64, T, n_particles)
     z[1, :] .= 1
@@ -56,14 +57,9 @@ function particle_filterRS(X::Array, n_particles::Int64, alpha::Float64; max_cau
         zIndex = z[t, rspidx]
         z[t, :] = zIndex
         propDist[t, :] = mean(comps.post[:, rspidx], dims=2)
-        cause_count[:, :] = cause_count[:, rspidx]
-        fcountsA[:, :, :] = fcountsA[:, :, rspidx]
-        fcountsB[:, :, :] = fcountsB[:, :, rspidx]
-        for pidx in 1:n_particles
-            cause_count[zIndex[pidx], pidx] = cause_count[zIndex[pidx], pidx] .+ 1
-            fcountsA[zIndex[pidx], x1, pidx] = fcountsA[zIndex[pidx], x1, pidx] .+ 1
-            fcountsB[zIndex[pidx], x0, pidx] = fcountsB[zIndex[pidx], x0, pidx] .+ 1
-        end
+        cause_count, fcountsA, fcountsB = update_stats(
+                cause_count, fcountsA, fcountsB, zIndex, rspidx, x0, x1, n_particles
+        )        
     end
     ncu = maximum([sum(cause_count[:, pidx] .!= 0) for pidx in 1:n_particles])
     return (

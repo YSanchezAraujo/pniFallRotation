@@ -143,6 +143,23 @@ function get_comps(x0::BitArray{1}, fa::Array{Float64, 3}, fb::Array{Float64, 3}
     )
 end
 
+function update_stats(cc::Array{Int64, 2}, fa::Array{Float64, 3}, fb::Array{Float64, 3}, 
+                      rszidx::Array{Int64, 1}, rspidx::Array{Int64, 1}, x0::Array{Int64, 1}, 
+                      x1::Array{Int64, 1}, n_particles::Int64)::Tuple
+    compare_pidx = collect(1:n_particles)
+    if mean(compare_pidx .== rspidx) != 1
+        cc[:, :, :] = cc[:, rspidx]
+        fa[:, :, :] = fa[:, :, rspidx]
+        fb[:, :, :] = fb[:, :, rspidx]
+    end
+    for pidx in 1:n_particles
+        cc[rszidx[pidx], pidx] = cc[rszidx[pidx], pidx] .+ 1
+        fa[rszidx[pidx], x1, pidx] = fa[rszidx[pidx], x1, pidx] .+ 1
+        fb[rszidx[pidx], x0, pidx] = fb[rszidx[pidx], x0, pidx] .+ 1
+    end
+    return cc, fa, fb
+end
+
 function plot_results(r, save_prefix)
     fig, ax = plt.subplots(ncols=1, nrows=2, figsize=(15, 8));
     ax[1].plot(r[1].post)
