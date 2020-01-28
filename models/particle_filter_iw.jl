@@ -13,7 +13,7 @@ function particle_filterIW(X::Array, n_particles::Int64, alpha::Float64; max_cau
     posCS = zeros(T, max_cause, n_particles)
     value = zeros(T)
     propDist = zeros(T, max_cause)
-    impW = ones(T, n_particles)
+    impW = zeros(T, n_particles)
     z = zeros(Int64, T, n_particles)
     z[1, :] .= 1
     cause_count[1, :] .+= 1
@@ -27,6 +27,7 @@ function particle_filterIW(X::Array, n_particles::Int64, alpha::Float64; max_cau
     propDist[1, :] = vcat(mean(cause_post[1, :, :], dims=2)...)
     fcountsA[1, :, :] .+= X[1, :]
     fcountsB[1, :, :] .+= (1 .- X[1, :])
+    impW[1, :] .= 1/n_particles
     # all is fine up until here
     for t in 2:T
         x0_bit, x1_bit = X[t, :] .== 0, X[t, :] .== 1
@@ -78,7 +79,7 @@ function particle_filterIW(X::Array, n_particles::Int64, alpha::Float64; max_cau
         lik = liks[:, 1:ncu, :, :],
         cprior = cause_prior[:, 1:ncu, :],
         ccount = cause_count[1:ncu, :],
-        impw = impW[:, 1:ncu],
+        impw = impW,
         v = value,
         pus = pUS[:, 1:ncu, :],
         poscs = posCS[:, 1:ncu, :],
