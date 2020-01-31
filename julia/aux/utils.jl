@@ -142,6 +142,15 @@ function get_comps(x0::BitArray{1}, fa::Array{Float64, 3}, fb::Array{Float64, 3}
         v=v
     )
 end
+# tested and works
+function feat_lik(x0::BitArray{1}, fa::Array{Float64, 3}, fb::Array{Float64, 3},
+                  ccount::Array{Int64, 2}, fidx::Int64)::Array{Float64, 2}
+    C, F, P = size(fa)
+    fcount = copy(fa)
+    fcount[:, x0, :] = fb[:, x0, :]
+    flik = fcount[:, fidx, :] ./ (fa[:, fidx, :] .+ fb[:, fidx, :])
+    return reshape(flik, (C, P))
+end
 
 function update_stats(cc::Array{Int64, 2}, fa::Array{Float64, 3}, fb::Array{Float64, 3}, 
                       rszidx::Array{Int64, 1}, rspidx::Array{Int64, 1}, x0::Array{Int64, 1}, 
