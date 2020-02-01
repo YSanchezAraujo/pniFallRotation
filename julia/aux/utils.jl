@@ -169,6 +169,22 @@ function update_stats(cc::Array{Int64, 2}, fa::Array{Float64, 3}, fb::Array{Floa
     return cc, fa, fb
 end
 
+function update_stats(x0::Array{Float64, 1}, x1::Array{Float64, 1}, 
+                      p::ParticleBunch, n_particles::Int64)::ParticleBunch
+    compare_pidx = collect(1:n_particles)
+    if mean(compare_pidx .== p[]) != 1
+        cc[:, :, :] = cc[:, rspidx]
+        fa[:, :, :] = fa[:, :, rspidx]
+        fb[:, :, :] = fb[:, :, rspidx]
+    end
+    for pidx in 1:n_particles
+        cc[rszidx[pidx], pidx] = cc[rszidx[pidx], pidx] .+ 1
+        fa[rszidx[pidx], x1, pidx] = fa[rszidx[pidx], x1, pidx] .+ 1
+        fb[rszidx[pidx], x0, pidx] = fb[rszidx[pidx], x0, pidx] .+ 1
+    end
+    return cc, fa, fb
+end
+
 function plot_results(r, save_prefix)
     fig, ax = plt.subplots(ncols=1, nrows=2, figsize=(15, 8));
     ax[1].plot(r[1].post)
