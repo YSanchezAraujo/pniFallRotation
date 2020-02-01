@@ -4,21 +4,23 @@ c: cause count
 a: feature by cause count (on)
 b: feature by cause count (off)
 l: cause by feature likelihood
+z: array of cause sampled for each particle
 po: cause by feature posterior
 w: importance weight 
 """
 mutable struct Particle
-	p::Array{Float64, 1}
-	c::Array{Int64, 1}
-	a::Array{Float64, 2}
-	b::Array{Float64, 2}
-	l::Array{Float64, 2}
-	po::Array{Float64, 2}
-	w::Float64
+    p::Array{Float64, 1}
+    c::Array{Int64, 1}
+    a::Array{Float64, 2}
+    b::Array{Float64, 2}
+    l::Array{Float64, 2}
+    z::Array{Float64, 1}
+    po::Array{Float64, 2}
+    w::Array{Float64, 1}
 end
 
 struct ParticleBunch
-	p::Array{Particle, 1}
+    p::Array{Particle, 1}
 end
 
 function initPrior(n::Int64)::Array{Float64, 1}
@@ -60,9 +62,9 @@ include("../aux/utils.jl");
 import Turing.Inference.resample_systematic;
 
 function particle_filter_DEV(X::Array, 
-	                         n_particles::Int64, 
-	                         alpha::Float64; 
-	                         max_cause::Int64=10)::ParticleBunch
+                             n_particles::Int64, 
+                             alpha::Float64; 
+                             max_cause::Int64=10)::Array{Float64, 2}
     T, F = size(X)
     impW = zeros(Float64, T, n_particles)
     z = zeros(Int64, T, n_particles)
@@ -70,7 +72,7 @@ function particle_filter_DEV(X::Array,
     iOffC = initOffCount(max_cause, F, X[1, :])
     likInit = iOnC ./ (iOnC .+ iOffC)
     posterior = zeros(Float64, T, max_cause)
-
+    # need to update this to align with the struct above
     particles = ParticleBunch([
         Particle(initPrior(max_cause),
                  initCCount(max_cause),
@@ -78,16 +80,24 @@ function particle_filter_DEV(X::Array,
                  1/n_particles)
         for pnum in 1:n_particles
     ])
-
     for t in 2:T
-    	for pidx in 1:n_particles
-            x0_bit, x1_bit = X[t, :] .== 0, X[t, :] .== 1
+        x0_bit, x1_bit = X[t, :] .== 0, X[t, :] .== 1
+        for pidx in 1:n_particles
+            # update cause probabilities
             particles[pidx].p = update_cause_probs(particles[pidx].c, t, alpha)
             particles[pidx].p = particles[pidx].p / sum(particles[pidx].p, dims=1)
+            # compute particle likelihood
             particles[pidx].l = particleLik(particles[pidx], x0_bit)
+            # compute particle posterior
             particles[pidx].po = particlePost(particles[pidx])
-    	end
-        posterior[t, :] = cat([particles[pidx].po for pidx in 1:n_particles]..., dims=3
+            # sample cause for each particle based on the posterior
+            particles[pidx].z[pidx] = rand(Categorical(
+                vcat(mean(particles[pidx].po, dims=2)...)
+            ))
+            # update importance weights
+
+        end
+        posterior[t, :] = cat([particles[pidx].po for pidx in 1:n_particles]..., dims=3)
     end
-    return particles
+    return posterior
 end
