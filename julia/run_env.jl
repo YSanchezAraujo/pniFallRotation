@@ -1,15 +1,15 @@
 using Distributions, LinearAlgebra, DataFrames;
 using PyPlot, Random, CSV;
 
-#wpath = "/Users/yoelsanchezaraujo/Desktop/pniFallRotation";
-wpath = "/home/yoel/Desktop/pniFallRotation/julia/";
+wpath = "/Users/yoelsanchezaraujo/Desktop/pniFallRotation/julia";
+#wpath = "/home/yoel/Desktop/pniFallRotation/julia/";
 include(joinpath(wpath, "aux/env.jl"));
 include(joinpath(wpath, "models/particle_filter_iw.jl"));
 include(joinpath(wpath, "models/particle_filter_rs.jl"));
 cd(wpath);
 
 # using gershman data
-df = CSV.read("/home/yoel/Desktop/pniFallRotation/data/example_datABA.csv");
+df = CSV.read("/Users/yoelsanchezaraujo/Desktop/pniFallRotation/data/example_datABA.csv");
 dfx = df[!, [7, 3, 4, 5, 6]];
 X = Array(dfx);
 # particle filter parameters
