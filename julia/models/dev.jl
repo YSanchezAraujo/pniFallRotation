@@ -16,7 +16,7 @@ mutable struct Particle
     l::Array{Float64, 2}
     z::Array{Int64, 1}
     po::Array{Float64, 1}
-    w::Array{Float64, 2}
+    w::Array{Float64, 1}
 end
 
 struct ParticleBunch
@@ -32,8 +32,8 @@ function initialize(n::Int64, f::Int64, p::Int64, t::Int64, X::Array{Int64, 1}):
     prior[1] = 1.0
     counts[1] = 1
     z = ones(Int64, n)
-    w = zeros(Float64, T, p)
-    w[1, :] .= 1/p
+    w = zeros(Float64, T)
+    w[1] = 1/p
     poN = col_prod(lik) .* prior
     po = reshape(poN / sum(poN, dims=1), (n,))
     return Particle(prior, counts, onCount, offCount, lik, z, po, w)
@@ -63,6 +63,7 @@ function particle_filter_DEV(X::Array,
     # need to update this to align with the struct above
     pars = ParticleBunch([initialize(max_cause, F, n_particles, T, X[1, :])
                           for pnum in 1:n_particles])
+    impw = [1/n_particles for p in 1:n_particles]
     for t in 2:T
         x0_bit, x1_bit = X[t, :] .== 0, X[t, :] .== 1
         for pidx in 1:n_particles
@@ -76,20 +77,22 @@ function particle_filter_DEV(X::Array,
             # sample cause for each particle based on the posterior
             pars.p[pidx].z[pidx] = Int64(rand(Categorical(pars.p[pidx].po)))
             # compute importance weights, not sure this is correct atm
-            pars.p[pidx].w[t, pidx] = pars.p[pidx].po[Int64(pars.p[pidx].z[pidx]), pidx] * pars.p[pidx].w[t-1, pidx]
+            pars.p[pidx].w[t] = pars.p[pidx].po[pars.p[pidx].z[pidx]] * impw[pidx]
         end
         # normalize importance weights
-        pars.p[pidx].w[t, :] = pars.p[pidx].w[t, :] ./ sum(pars.p[pidx].w[t, :])
+        impw = [pars.p[pidx].w[t] for pidx in 1:n_particles]
+        impw = impw ./ sum(impw)
         # check if resampling is needed
-        if 1 ./ sum(pars.p[pidx].w[t, :].^2) < n_particles / 2
+        if 1 ./ sum(impw.^2) < n_particles / 2
             println("resampling:    ", t)
-            rspidx = resample_systematic(pars.p[pidx].w[t, :], n_particles)
-            pars.p[pidx].w[t, :] .= 1/n_particles
+            rspidx = resample_systematic(impw, n_particles)
+            pars.p[pidx].w[t] = 1/n_particles
+            impw = [pars.p[pidx].w[t] for pidx in 1:n_particles]
         else
             rspidx = collect(1:n_particles)
         end
         # compute posterior based on resampling,
-        #posterior[t, :] = cat([particles[pidx].po for pidx in 1:n_particles].., dims=3)
+        posterior[t, :] = hcat([pars.p[pidx].po for pidx in 1:n_particles]...) * impw
         # compute value
         #value[t] = 
         # update sufficient statistics
