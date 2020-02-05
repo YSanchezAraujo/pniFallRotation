@@ -1,15 +1,15 @@
 using Distributions, LinearAlgebra, DataFrames;
 using PyPlot, Random, CSV;
 
-wpath = "/Users/yoelsanchezaraujo/Desktop/pniFallRotation/julia";
+wpath = "/Users/yoelsanchezaraujo/Desktop/pniFallRotation/";
 #wpath = "/home/yoel/Desktop/pniFallRotation/julia/";
-include(joinpath(wpath, "aux/env.jl"));
-include(joinpath(wpath, "models/particle_filter_iw.jl"));
-include(joinpath(wpath, "models/particle_filter_rs.jl"));
+include(joinpath(wpath, "julia/aux/env.jl"));
+include(joinpath(wpath, "julia/models/particle_filter_iw.jl"));
+include(joinpath(wpath, "julia/models/particle_filter_rs.jl"));
 cd(wpath);
 
 # using gershman data
-df = CSV.read("/Users/yoelsanchezaraujo/Desktop/pniFallRotation/data/example_datABA.csv");
+df = CSV.read(joinpath(wpath, "data/example_datABA.csv"));
 dfx = df[!, [7, 3, 4, 5, 6]];
 X = Array(dfx);
 # particle filter parameters
@@ -21,13 +21,13 @@ Random.seed!(32343)
 multi_plot = false
 
 if !multi_plot
-    rs = particle_filterRS(X, n_particles, 2.0; max_cause=50);
     iw = particle_filterIW(X, n_particles, 2.0; max_cause=50);
+    iwa = particle_filterIWA(X, n_particles, 0.1; max_cause=50);
 else
-	for alpha in [0.1, 0.5, 1.0, 3.0, 6.0]
+	for alpha in [0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 		plot_results(
-	        [particle_filterRS(X, n_particles, alpha; max_cause=50),
-	         particle_filterIW(X, n_particles, alpha; max_cause=50)],
+	        [particle_filterIW(X, n_particles, alpha; max_cause=50),
+	         particle_filterIWA(X, n_particles, alpha; max_cause=50)],
 	         string("alpha", alpha)
 		)
 	end

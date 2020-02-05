@@ -41,6 +41,32 @@ function update_cause_probs(cause_vec::Array, t::Int64, alpha::Float64)::Array
     return probs
 end
 
+function update_cause_probs2(cause_mat::Array{Int64, 2}, t::Int64,
+                            alpha::Float64)::Array{Float64, 2}
+    N, P = size(cause_mat)
+    probs = zeros(N, P)
+    nonzeroN = [Int64(sum(cause_mat[:, col_idx])) for col_idx in 1:P]
+    for col_idx in 1:P
+        probs[:, col_idx] = update_cause_probs2(cause_mat[:, col_idx], t, alpha)
+    end
+    probs
+end
+
+function update_cause_probs2(cause_vec::Array, t::Int64, alpha::Float64)::Array
+    probs = zeros(length(cause_vec))
+    nnonzero = Int64(sum(cause_vec .!= 0))
+    for (idx, val) in enumerate(cause_vec)
+        if (val == 0 && idx == nnonzero + 1)
+            probs[idx] = alpha
+        elseif val != 0
+            probs[idx] = (val*(1 - alpha))/(t - 1)
+        else
+            probs[idx] = 0
+        end
+    end
+    return probs
+end
+
 function update_cause_probs(cause_mat::Array{Int64, 2}, t::Int64,
                             alpha::Float64)::Array{Float64, 2}
     N, P = size(cause_mat)
@@ -51,6 +77,7 @@ function update_cause_probs(cause_mat::Array{Int64, 2}, t::Int64,
     end
     probs
 end
+
 
 function col_mnz(x::Array)::Array
     N, P = size(x)
@@ -169,21 +196,21 @@ function update_stats(cc::Array{Int64, 2}, fa::Array{Float64, 3}, fb::Array{Floa
     return cc, fa, fb
 end
 
-function update_stats(x0::Array{Float64, 1}, x1::Array{Float64, 1}, 
-                      p::ParticleBunch, n_particles::Int64)::ParticleBunch
-    compare_pidx = collect(1:n_particles)
-    if mean(compare_pidx .== p[]) != 1
-        cc[:, :, :] = cc[:, rspidx]
-        fa[:, :, :] = fa[:, :, rspidx]
-        fb[:, :, :] = fb[:, :, rspidx]
-    end
-    for pidx in 1:n_particles
-        cc[rszidx[pidx], pidx] = cc[rszidx[pidx], pidx] .+ 1
-        fa[rszidx[pidx], x1, pidx] = fa[rszidx[pidx], x1, pidx] .+ 1
-        fb[rszidx[pidx], x0, pidx] = fb[rszidx[pidx], x0, pidx] .+ 1
-    end
-    return cc, fa, fb
-end
+# function update_stats(x0::Array{Float64, 1}, x1::Array{Float64, 1}, 
+#                       p::ParticleBunch, n_particles::Int64)::ParticleBunch
+#     compare_pidx = collect(1:n_particles)
+#     if mean(compare_pidx .== p[]) != 1
+#         cc[:, :, :] = cc[:, rspidx]
+#         fa[:, :, :] = fa[:, :, rspidx]
+#         fb[:, :, :] = fb[:, :, rspidx]
+#     end
+#     for pidx in 1:n_particles
+#         cc[rszidx[pidx], pidx] = cc[rszidx[pidx], pidx] .+ 1
+#         fa[rszidx[pidx], x1, pidx] = fa[rszidx[pidx], x1, pidx] .+ 1
+#         fb[rszidx[pidx], x0, pidx] = fb[rszidx[pidx], x0, pidx] .+ 1
+#     end
+#     return cc, fa, fb
+# end
 
 function plot_results(r, save_prefix)
     fig, ax = plt.subplots(ncols=1, nrows=2, figsize=(15, 8));

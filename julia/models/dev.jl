@@ -75,7 +75,7 @@ function particle_filter_DEV(X::Array,
             # compute particle posterior
             pars.p[pidx].po = particlePost(pars.p[pidx])
             # sample cause for each particle based on the posterior
-            pars.p[pidx].z[pidx] = Int64(rand(Categorical(pars.p[pidx].po)))
+            pars.p[pidx].z[pidx] = rand(Categorical(pars.p[pidx].po))
             # compute importance weights, not sure this is correct atm
             pars.p[pidx].w[t] = pars.p[pidx].po[pars.p[pidx].z[pidx]] * impw[pidx]
         end
@@ -87,16 +87,19 @@ function particle_filter_DEV(X::Array,
             println("resampling:    ", t)
             rspidx = resample_systematic(impw, n_particles)
             pars.p[pidx].w[t] = 1/n_particles
-            impw = [pars.p[pidx].w[t] for pidx in 1:n_particles]
+            impw = [pars.p[pidx].w[t] for pidx in rspidx]
         else
             rspidx = collect(1:n_particles)
         end
+        for (pidx, ridx) in enumerate(rspidx)
+            pars.p[pidx].z[pidx] = pars.p[ridx].z[ridx]
+        end
         # compute posterior based on resampling,
-        posterior[t, :] = hcat([pars.p[pidx].po for pidx in 1:n_particles]...) * impw
+        posterior[t, :] = hcat([pars.p[pidx].po for pidx in rspidx]...) * impw
         # compute value
         #value[t] = 
         # update sufficient statistics
         pars = update_stats(findall(x0), findall(x1), pars, rspidx, n_particles)
     end
-    return posterior
+    return [posterior value]
 end
