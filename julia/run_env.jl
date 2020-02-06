@@ -6,19 +6,32 @@ wpath = "/Users/yoelsanchezaraujo/Desktop/pniFallRotation/";
 include(joinpath(wpath, "julia/aux/env.jl"));
 include(joinpath(wpath, "julia/models/particle_filter_iw.jl"));
 include(joinpath(wpath, "julia/models/particle_filter_rs.jl"));
+include(joinpath(wpath, "julia/models/particle_filter_iwa.jl"));
 cd(wpath);
 
 # using gershman data
-df = CSV.read(joinpath(wpath, "data/example_datABA.csv"));
+df = CSV.read(joinpath(wpath, "data/renewal.csv"));
 dfx = df[!, [7, 3, 4, 5, 6]];
 X = Array(dfx);
 # particle filter parameters
-n_particles = 30;
+n_particles = 300;
 # seed it for repro
 Random.seed!(32343)
 # now trying with a larger concentration parameter
 
 multi_plot = false
+
+# need to add in extra flexibility such that modeling post pre-training
+# situations at t=0 is possible
+
+iw = particle_filterIW(X, n_particles, 2.0; max_cause=50);
+plotcv(iw, "alpha2.0IW");
+plotbar(iw, "alpha2.0IW")
+
+alphIWA=0.2
+iwa = particle_filterIWA(X, n_particles, alphIWA; max_cause=50);
+plotcv(iwa, string("alpha",alphIWA,"IWA"));
+plotbar(iwa, string("alpha",alphIWA,"IWA"));
 
 if !multi_plot
     iw = particle_filterIW(X, n_particles, 2.0; max_cause=50);
@@ -32,3 +45,4 @@ else
 		)
 	end
 end
+

@@ -49,7 +49,18 @@ function update_cause_probs2(cause_mat::Array{Int64, 2}, t::Int64,
     for col_idx in 1:P
         probs[:, col_idx] = update_cause_probs2(cause_mat[:, col_idx], t, alpha)
     end
-    probs
+    return probs
+end
+
+function update_cause_probs(cause_mat::Array{Int64, 2}, t::Int64,
+                            alpha::Float64)::Array{Float64, 2}
+    N, P = size(cause_mat)
+    probs = zeros(N, P)
+    nonzeroN = [Int64(sum(cause_mat[:, col_idx])) for col_idx in 1:P]
+    for col_idx in 1:P
+        probs[:, col_idx] = update_cause_probs(cause_mat[:, col_idx], t, alpha)
+    end
+    return probs
 end
 
 function update_cause_probs2(cause_vec::Array, t::Int64, alpha::Float64)::Array
@@ -66,18 +77,6 @@ function update_cause_probs2(cause_vec::Array, t::Int64, alpha::Float64)::Array
     end
     return probs
 end
-
-function update_cause_probs(cause_mat::Array{Int64, 2}, t::Int64,
-                            alpha::Float64)::Array{Float64, 2}
-    N, P = size(cause_mat)
-    probs = zeros(N, P)
-    nonzeroN = [Int64(sum(cause_mat[:, col_idx])) for col_idx in 1:P]
-    for col_idx in 1:P
-        probs[:, col_idx] = update_cause_probs(cause_mat[:, col_idx], t, alpha)
-    end
-    probs
-end
-
 
 function col_mnz(x::Array)::Array
     N, P = size(x)
@@ -211,6 +210,53 @@ end
 #     end
 #     return cc, fa, fb
 # end
+
+function plot_postcause(pfo, save_prefix)
+    plt.plot(pfo.post)
+    plt.legend([string("cause ", x) for x in 1:size(pfo.post, 2)])
+    plt.ylabel("cause posterior probability")
+    plt.xlabel("trials")
+    for axv in [20, 70]
+        plt.axvline(axv, linestyle="--", color="black")
+    end
+    plt.savefig(string(save_prefix, "posteriorCause.png"), dpi=300, bbox_inches="tight")
+    plt.close()
+end
+
+function plot_value(pfo, save_prefix)
+    plt.plot(pfo.v)
+    plt.xlabel("trials")
+    plt.ylabel("probability of responding (value)")
+    for axv in [20, 70]
+        plt.axvline(axv, linestyle="--", color="black")
+    end
+    plt.savefig(string(save_prefix, "posValue.png"), dpi=300, bbox_inches="tight")
+    plt.close()
+end
+
+function plotcv(pfo, save_prefix)
+    fig, ax = plt.subplots(ncols=1, nrows=2, figsize=(13, 7))
+    ax[1].plot(pfo.post)
+    ax[1].legend([string("cause ", x) for x in 1:size(pfo.post, 2)])
+    ax[1].set_ylabel("posterior prob of cause")
+    ax[2].plot(pfo.v)
+    ax[2].set_ylabel("posterior of US (value)")
+    ax[2].set_xlabel("trials")
+    plt.savefig(string(save_prefix, "posteiorsCauseValue.png"), dpi=300, bbox_inches="tight")
+    plt.close()
+end
+
+function plotbar(pfo, save_prefix)
+    fig, ax = plt.subplots(ncols=2, nrows=1, figsize=(10, 6))
+    ax[1].bar(height=pfo.post[21, :], 
+              x=[string("cause ", i) for i in 1:size(pfo.post, 2)])
+    ax[2].bar(height=pfo.post[71, :], 
+              x=[string("cause ", i) for i in 1:size(pfo.post, 2)])
+    ax[1].set_title("extinction")
+    ax[2].set_title("test phase")
+    plt.savefig(string(save_prefix, "barplotsCausePost.png"), dpi=300, bbox_inches="tight")
+    plt.close()
+end
 
 function plot_results(r, save_prefix)
     fig, ax = plt.subplots(ncols=1, nrows=2, figsize=(15, 8));
