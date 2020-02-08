@@ -14,7 +14,7 @@ df = CSV.read(joinpath(wpath, "data/renewal.csv"));
 dfx = df[!, [7, 3, 4, 5, 6]];
 X = Array(dfx);
 # particle filter parameters
-n_particles = 300;
+n_particles = 3000;
 # seed it for repro
 Random.seed!(32343)
 # now trying with a larger concentration parameter
@@ -26,12 +26,12 @@ multi_plot = false
 
 iw = particle_filterIW(X, n_particles, 2.0; max_cause=50);
 plotcv(iw, "alpha2.0IW");
-plotbar(iw, "alpha2.0IW")
+plotbar(iw, "alpha2.0IW");
 
-alphIWA=0.2
+alphIWA = 0.1;
 iwa = particle_filterIWA(X, n_particles, alphIWA; max_cause=50);
-plotcv(iwa, string("alpha",alphIWA,"IWA"));
-plotbar(iwa, string("alpha",alphIWA,"IWA"));
+plotcv(iwa, string("alpha", alphIWA, "IWA"));
+plotbar(iwa, string("alpha", alphIWA, "IWA"));
 
 if !multi_plot
     iw = particle_filterIW(X, n_particles, 2.0; max_cause=50);
